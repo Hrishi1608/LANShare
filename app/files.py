@@ -8,6 +8,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     session,
     url_for,
 )
@@ -102,3 +103,77 @@ def upload():
         return redirect(url_for("main.home"))
 
     return render_template("upload.html")
+
+
+@files.route("/download/<int:file_id>")
+@login_required
+def download(file_id):
+    db = get_db_connection()
+
+    file_record = db.execute(
+        """
+        SELECT id, filename, filepath
+        FROM files
+        WHERE id = ?
+        """,
+        (file_id,),
+    ).fetchone()
+
+    db.close()
+
+    if file_record is None:
+        flash("File not found.")
+        return redirect(url_for("main.home"))
+
+    file_path = Path(file_record["filepath"])
+
+    if not file_path.is_file():
+        flash("The requested file is no longer available.")
+        return redirect(url_for("main.home"))
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=file_record["filename"],
+    )
+
+
+@files.route("/delete/<int:file_id>", methods=("POST",))
+@login_required
+def delete(file_id):
+    db = get_db_connection()
+
+    file_record = db.execute(
+        """
+        SELECT id, filename, filepath, uploaded_by
+        FROM files
+        WHERE id = ?
+        """,
+        (file_id,),
+    ).fetchone()
+
+    if file_record is None:
+        db.close()
+        flash("File not found.")
+        return redirect(url_for("main.home"))
+
+    if file_record["uploaded_by"] != session["user_id"]:
+        db.close()
+        flash("You are not authorized to delete this file.")
+        return redirect(url_for("main.home"))
+
+    file_path = Path(file_record["filepath"])
+
+    if file_path.is_file():
+        file_path.unlink()
+
+    db.execute(
+        "DELETE FROM files WHERE id = ?",
+        (file_id,),
+    )
+
+    db.commit()
+    db.close()
+
+    flash(f"{file_record['filename']} deleted successfully.")
+    return redirect(url_for("main.home"))

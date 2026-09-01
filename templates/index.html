@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>LANShare</title>
 </head>
 
@@ -11,10 +12,6 @@
     <h1>LANShare</h1>
 
     <h2>Local Area Network File Sharing</h2>
-
-    <p>
-        Share files securely with devices on your local network.
-    </p>
 
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -28,21 +25,84 @@
 
         <h3>Welcome, {{ username }}!</h3>
 
-        <p>You are logged in successfully.</p>
+        <p>
+            Share files with devices on your local network.
+        </p>
 
-        <a href="{{ url_for('files.upload') }}">Upload File</a>
+        <p>
+            <a href="{{ url_for('files.upload') }}">Upload File</a>
+        </p>
 
-        <br><br>
+        <h3>Shared Files</h3>
 
-        <a href="{{ url_for('auth.logout') }}">Logout</a>
+        {% if files %}
+
+            <table border="1" cellpadding="8">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Size</th>
+                        <th>Uploaded By</th>
+                        <th>Uploaded At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for file in files %}
+                        <tr>
+                            <td>{{ file["filename"] }}</td>
+                            <td>{{ file["size"] }} bytes</td>
+                            <td>{{ file["uploader"] or "Unknown" }}</td>
+                            <td>{{ file["uploaded_at"] }}</td>
+
+                            <td>
+                                <a
+                                    href="{{ url_for('files.download', file_id=file['id']) }}"
+                                >
+                                    Download
+                                </a>
+
+                                {% if file["uploader"] == username %}
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('files.delete', file_id=file['id']) }}"
+                                        style="display:inline;"
+                                    >
+                                        <button type="submit">
+                                            Delete
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% else %}
+
+            <p>No files have been shared yet.</p>
+
+        {% endif %}
+
+        <p>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </p>
 
     {% else %}
+
+        <p>
+            Share files securely with devices on your local network.
+        </p>
 
         <a href="{{ url_for('auth.login') }}">Login</a>
 
         <br><br>
 
-        <a href="{{ url_for('auth.register') }}">Create Account</a>
+        <a href="{{ url_for('auth.register') }}">
+            Create Account
+        </a>
 
     {% endif %}
 

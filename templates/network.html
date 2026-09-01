@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Network - LANShare</title>
+</head>
+
+<body>
+
+    <h1>LANShare</h1>
+
+    <h2>Network Information</h2>
+
+    <p>
+        Device: {{ hostname }}
+    </p>
+
+    <p>
+        Local IP: {{ local_ip }}
+    </p>
+
+    <p>
+        Server Status: Online
+    </p>
+
+    <p>
+        LANShare Address:
+        http://{{ local_ip }}:5000
+    </p>
+
+    <br>
+
+    <a href="{{ url_for('main.home') }}">
+        Back to Home
+    </a>
+
+</body>
+</html>

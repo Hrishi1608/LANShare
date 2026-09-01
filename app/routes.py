@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, session
 
 from app.auth import login_required
 from app.database import get_db_connection
+from app.network import get_hostname, get_local_ip
 
 
 main = Blueprint("main", __name__)
@@ -10,6 +11,8 @@ main = Blueprint("main", __name__)
 @main.route("/")
 def home():
     files = []
+    local_ip = get_local_ip()
+    hostname = get_hostname()
 
     if "user_id" in session:
         db = get_db_connection()
@@ -36,6 +39,8 @@ def home():
         logged_in="user_id" in session,
         username=session.get("username"),
         files=files,
+        local_ip=local_ip,
+        hostname=hostname,
     )
 
 
@@ -72,4 +77,14 @@ def history():
     return render_template(
         "history.html",
         transfers=transfers,
+    )
+
+
+@main.route("/network")
+@login_required
+def network():
+    return render_template(
+        "network.html",
+        local_ip=get_local_ip(),
+        hostname=get_hostname(),
     )

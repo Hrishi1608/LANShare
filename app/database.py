@@ -55,3 +55,33 @@ def init_db():
 
     connection.commit()
     connection.close()
+def log_transfer(
+    file_id,
+    transfer_type,
+    status,
+    size=None,
+):
+    """Store a file transfer event in the transfer history."""
+    connection = get_db_connection()
+
+    connection.execute(
+        """
+        INSERT INTO transfers (
+            file_id,
+            transfer_type,
+            status,
+            size,
+            completed_at
+        )
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        """,
+        (
+            file_id,
+            transfer_type,
+            status,
+            size,
+        ),
+    )
+
+    connection.commit()
+    connection.close()    

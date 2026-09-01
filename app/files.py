@@ -15,7 +15,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from app.auth import login_required
-from app.database import get_db_connection
+from app.database import get_db_connection, log_transfer
 
 
 files = Blueprint("files", __name__)
@@ -53,20 +53,40 @@ def upload():
         uploaded_file = request.files.get("file")
 
         if uploaded_file is None:
+            log_transfer(
+                file_id=None,
+                transfer_type="upload",
+                status="failed",
+            )
             flash("Please select a file.")
             return redirect(url_for("files.upload"))
 
         if uploaded_file.filename == "":
+            log_transfer(
+                file_id=None,
+                transfer_type="upload",
+                status="failed",
+            )
             flash("Please select a file.")
             return redirect(url_for("files.upload"))
 
         if not allowed_file(uploaded_file.filename):
+            log_transfer(
+                file_id=None,
+                transfer_type="upload",
+                status="failed",
+            )
             flash("File type is not supported.")
             return redirect(url_for("files.upload"))
 
         safe_name = secure_filename(uploaded_file.filename)
 
         if not safe_name:
+            log_transfer(
+                file_id=None,
+                transfer_type="upload",
+                status="failed",
+            )
             flash("Invalid filename.")
             return redirect(url_for("files.upload"))
 
@@ -83,7 +103,7 @@ def upload():
 
         db = get_db_connection()
 
-        db.execute(
+        cursor = db.execute(
             """
             INSERT INTO files (filename, filepath, size, uploaded_by)
             VALUES (?, ?, ?, ?)
@@ -97,7 +117,17 @@ def upload():
         )
 
         db.commit()
+
+        file_id = cursor.lastrowid
+
         db.close()
+
+        log_transfer(
+            file_id=file_id,
+            transfer_type="upload",
+            status="completed",
+            size=file_size,
+        )
 
         flash(f"{safe_name} uploaded successfully.")
         return redirect(url_for("main.home"))
@@ -122,14 +152,31 @@ def download(file_id):
     db.close()
 
     if file_record is None:
+        log_transfer(
+            file_id=None,
+            transfer_type="download",
+            status="failed",
+        )
         flash("File not found.")
         return redirect(url_for("main.home"))
 
     file_path = Path(file_record["filepath"])
 
     if not file_path.is_file():
+        log_transfer(
+            file_id=file_record["id"],
+            transfer_type="download",
+            status="failed",
+        )
         flash("The requested file is no longer available.")
         return redirect(url_for("main.home"))
+
+    log_transfer(
+        file_id=file_record["id"],
+        transfer_type="download",
+        status="completed",
+        size=file_path.stat().st_size,
+    )
 
     return send_file(
         file_path,

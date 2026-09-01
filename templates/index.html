@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,11 +15,17 @@
     <h2>Local Area Network File Sharing</h2>
 
     {% with messages = get_flashed_messages() %}
+
         {% if messages %}
+
             {% for message in messages %}
+
                 <p>{{ message }}</p>
+
             {% endfor %}
+
         {% endif %}
+
     {% endwith %}
 
     {% if logged_in %}
@@ -29,8 +36,39 @@
             Share files with devices on your local network.
         </p>
 
+        <!-- LANShare server information -->
+        <h3>LANShare Server</h3>
+
         <p>
-            <a href="{{ url_for('files.upload') }}">Upload File</a>
+            Device: {{ hostname }}
+        </p>
+
+        <p>
+            Local IP: {{ local_ip }}
+        </p>
+
+        <p>
+            Status: Online
+        </p>
+
+        <p>
+            Other devices on the same network can access LANShare at:
+        </p>
+
+        <p>
+            <strong>http://{{ local_ip }}:5000</strong>
+        </p>
+
+        <p>
+            <a href="{{ url_for('main.network') }}">
+                Network Information
+            </a>
+        </p>
+
+        <p>
+            <a href="{{ url_for('files.upload') }}">
+                Upload File
+            </a>
         </p>
 
         <h3>Shared Files</h3>
@@ -38,7 +76,9 @@
         {% if files %}
 
             <table border="1" cellpadding="8">
+
                 <thead>
+
                     <tr>
                         <th>File</th>
                         <th>Size</th>
@@ -46,17 +86,33 @@
                         <th>Uploaded At</th>
                         <th>Actions</th>
                     </tr>
+
                 </thead>
 
                 <tbody>
+
                     {% for file in files %}
+
                         <tr>
-                            <td>{{ file["filename"] }}</td>
-                            <td>{{ file["size"] }} bytes</td>
-                            <td>{{ file["uploader"] or "Unknown" }}</td>
-                            <td>{{ file["uploaded_at"] }}</td>
 
                             <td>
+                                {{ file["filename"] }}
+                            </td>
+
+                            <td>
+                                {{ file["size"] }} bytes
+                            </td>
+
+                            <td>
+                                {{ file["uploader"] or "Unknown" }}
+                            </td>
+
+                            <td>
+                                {{ file["uploaded_at"] }}
+                            </td>
+
+                            <td>
+
                                 <a
                                     href="{{ url_for('files.download', file_id=file['id']) }}"
                                 >
@@ -64,30 +120,49 @@
                                 </a>
 
                                 {% if file["uploader"] == username %}
+
                                     <form
                                         method="POST"
                                         action="{{ url_for('files.delete', file_id=file['id']) }}"
-                                        style="display:inline;"
+                                        style="display: inline;"
                                     >
+
                                         <button type="submit">
                                             Delete
                                         </button>
+
                                     </form>
+
                                 {% endif %}
+
                             </td>
+
                         </tr>
+
                     {% endfor %}
+
                 </tbody>
+
             </table>
 
         {% else %}
 
-            <p>No files have been shared yet.</p>
+            <p>
+                No files have been shared yet.
+            </p>
 
         {% endif %}
 
         <p>
-            <a href="{{ url_for('auth.logout') }}">Logout</a>
+            <a href="{{ url_for('main.history') }}">
+                Transfer History
+            </a>
+        </p>
+
+        <p>
+            <a href="{{ url_for('auth.logout') }}">
+                Logout
+            </a>
         </p>
 
     {% else %}
@@ -96,7 +171,9 @@
             Share files securely with devices on your local network.
         </p>
 
-        <a href="{{ url_for('auth.login') }}">Login</a>
+        <a href="{{ url_for('auth.login') }}">
+            Login
+        </a>
 
         <br><br>
 
@@ -107,4 +184,5 @@
     {% endif %}
 
 </body>
+
 </html>

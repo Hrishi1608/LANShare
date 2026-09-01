@@ -43,3 +43,33 @@ def home():
 @login_required
 def dashboard():
     return home()
+
+
+@main.route("/history")
+@login_required
+def history():
+    db = get_db_connection()
+
+    transfers = db.execute(
+        """
+        SELECT
+            transfers.id,
+            files.filename,
+            transfers.transfer_type,
+            transfers.status,
+            transfers.size,
+            transfers.started_at,
+            transfers.completed_at
+        FROM transfers
+        LEFT JOIN files
+            ON transfers.file_id = files.id
+        ORDER BY transfers.id DESC
+        """
+    ).fetchall()
+
+    db.close()
+
+    return render_template(
+        "history.html",
+        transfers=transfers,
+    )

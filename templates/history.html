@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Transfer History - LANShare</title>
+</head>
+
+<body>
+
+    <h1>LANShare</h1>
+
+    <h2>Transfer History</h2>
+
+    {% if transfers %}
+
+        <table border="1" cellpadding="8">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Size</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for transfer in transfers %}
+                    <tr>
+                        <td>
+                            {{ transfer["filename"] or "Unknown file" }}
+                        </td>
+                        <td>
+                            {{ transfer["transfer_type"] }}
+                        </td>
+                        <td>
+                            {{ transfer["status"] }}
+                        </td>
+                        <td>
+                            {{ transfer["size"] or "-" }}
+                        </td>
+                        <td>
+                            {{ transfer["completed_at"] or transfer["started_at"] }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+
+        <p>No transfer history available.</p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{{ url_for('main.home') }}">Back to Home</a>
+
+</body>
+</html>

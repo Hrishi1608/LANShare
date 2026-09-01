@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LANShare</title>
 </head>
+
 <body>
 
     <h1>LANShare</h1>
@@ -12,9 +13,34 @@
     <h2>Local Area Network File Sharing</h2>
 
     <p>
-        Welcome to LANShare.
         Share files securely with devices on your local network.
     </p>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if logged_in %}
+
+        <h3>Welcome, {{ username }}!</h3>
+
+        <p>You are logged in successfully.</p>
+
+        <a href="{{ url_for('auth.logout') }}">Logout</a>
+
+    {% else %}
+
+        <a href="{{ url_for('auth.login') }}">Login</a>
+
+        <br><br>
+
+        <a href="{{ url_for('auth.register') }}">Create Account</a>
+
+    {% endif %}
 
 </body>
 </html>

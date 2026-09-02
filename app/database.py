@@ -17,6 +17,18 @@ def get_db_connection():
     return connection
 
 
+def _column_exists(connection, table, column):
+    rows = connection.execute(f"PRAGMA table_info({table})").fetchall()
+    return any(row["name"] == column for row in rows)
+
+
+def _migrate_files_table(connection):
+    """Add the sha256 column to files if it doesn't exist yet (safe on existing DBs)."""
+    if not _column_exists(connection, "files", "sha256"):
+        connection.execute("ALTER TABLE files ADD COLUMN sha256 TEXT")
+        connection.commit()
+
+
 def init_db():
     """Create the database tables if they do not already exist."""
     connection = get_db_connection()
@@ -37,6 +49,7 @@ def init_db():
             size INTEGER NOT NULL,
             uploaded_by INTEGER,
             uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            sha256 TEXT,
             FOREIGN KEY (uploaded_by) REFERENCES users(id)
         );
 
@@ -54,7 +67,12 @@ def init_db():
     )
 
     connection.commit()
+
+    _migrate_files_table(connection)
+
     connection.close()
+
+
 def log_transfer(
     file_id,
     transfer_type,
@@ -84,4 +102,4 @@ def log_transfer(
     )
 
     connection.commit()
-    connection.close()    
+    connection.close()

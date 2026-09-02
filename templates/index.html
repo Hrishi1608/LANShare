@@ -72,9 +72,6 @@
 
             </div>
 
-            <!-- INSERT this block right after the .server-card closing </div>,
-                 before or after the stats-grid block from the previous PR -->
-
             <div class="qr-card">
 
                 <div class="qr-card-text">
@@ -93,9 +90,6 @@
                 >
 
             </div>
-
-            <!-- INSERT this whole block right after the closing </div> of .server-card,
-                 and before the "Shared files" <div class="section-head"> -->
 
             {% if stats %}
 
@@ -145,6 +139,7 @@
                             <tr>
                                 <th>File</th>
                                 <th>Size</th>
+                                <th>SHA-256</th>
                                 <th>Uploaded by</th>
                                 <th>Uploaded at</th>
                                 <th>Actions</th>
@@ -161,6 +156,24 @@
                                     <td class="filename">{{ file["filename"] }}</td>
 
                                     <td class="size">{{ file["size"] }} bytes</td>
+
+                                    <td class="hash-cell">
+                                        {% if file["sha256"] %}
+                                            <span class="hash-text" title="{{ file['sha256'] }}">
+                                                {{ file["sha256"][:10] }}&hellip;
+                                            </span>
+                                            <button
+                                                type="button"
+                                                class="btn btn-copy"
+                                                data-hash="{{ file['sha256'] }}"
+                                                onclick="lanshareCopyHash(this)"
+                                            >
+                                                Copy
+                                            </button>
+                                        {% else %}
+                                            <span class="hash-text hash-text--missing">&mdash;</span>
+                                        {% endif %}
+                                    </td>
 
                                     <td>{{ file["uploader"] or "Unknown" }}</td>
 
@@ -243,6 +256,20 @@
         </div>
 
     {% endif %}
+
+    <script>
+        function lanshareCopyHash(button) {
+            const hash = button.getAttribute("data-hash");
+
+            navigator.clipboard.writeText(hash).then(() => {
+                const original = button.textContent;
+                button.textContent = "Copied";
+                setTimeout(() => {
+                    button.textContent = original;
+                }, 1500);
+            });
+        }
+    </script>
 
 </body>
 

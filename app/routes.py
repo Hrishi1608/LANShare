@@ -27,6 +27,7 @@ def home():
                 files.filename,
                 files.size,
                 files.uploaded_at,
+                files.sha256,
                 users.username AS uploader
             FROM files
             LEFT JOIN users

@@ -29,6 +29,31 @@ def _migrate_files_table(connection):
         connection.commit()
 
 
+def _migrate_users_table(connection):
+    """Add the role column to users if it doesn't exist yet (safe on existing DBs).
+
+    Existing users are backfilled: the earliest-created account becomes 'admin'
+    so there's always at least one admin after upgrading; everyone else becomes
+    'user'. On a fresh database this backfill is a no-op (no rows yet).
+    """
+    if not _column_exists(connection, "users", "role"):
+        connection.execute(
+            "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'"
+        )
+        connection.commit()
+
+        first_user = connection.execute(
+            "SELECT id FROM users ORDER BY created_at ASC, id ASC LIMIT 1"
+        ).fetchone()
+
+        if first_user:
+            connection.execute(
+                "UPDATE users SET role = 'admin' WHERE id = ?",
+                (first_user["id"],),
+            )
+            connection.commit()
+
+
 def init_db():
     """Create the database tables if they do not already exist."""
     connection = get_db_connection()
@@ -39,6 +64,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -80,6 +106,11 @@ def init_db():
     connection.commit()
 
     _migrate_files_table(connection)
+    _migrate_users_table(connection)
+
+    # Fresh database, no admin yet (e.g. right after first-ever init, before
+    # any user has registered): nothing to backfill here, register() handles
+    # making the very first registrant an admin. See app/auth.py.
 
     connection.close()
 
@@ -130,3 +161,72 @@ def log_action(user_id, username, action, target=None, ip_address=None):
 
     connection.commit()
     connection.close()
+
+
+def count_users():
+    """Return the total number of registered users (used to decide if the
+    next registration should become the first admin)."""
+    connection = get_db_connection()
+
+    row = connection.execute("SELECT COUNT(*) AS n FROM users").fetchone()
+
+    connection.close()
+
+    return row["n"]
+
+
+def get_all_users():
+    """Return all users, most recently created first, for the admin panel."""
+    connection = get_db_connection()
+
+    users = connection.execute(
+        """
+        SELECT id, username, role, created_at
+        FROM users
+        ORDER BY created_at DESC, id DESC
+        """
+    ).fetchall()
+
+    connection.close()
+
+    return users
+
+
+def get_user_by_id(user_id):
+    connection = get_db_connection()
+
+    user = connection.execute(
+        "SELECT id, username, role, created_at FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+
+    connection.close()
+
+    return user
+
+
+def set_user_role(user_id, role):
+    """Update a user's role. Caller is responsible for validating `role`
+    (must be 'admin' or 'user') and for preventing self-demotion/last-admin
+    lockout — see app/routes.py admin_users_update."""
+    connection = get_db_connection()
+
+    connection.execute(
+        "UPDATE users SET role = ? WHERE id = ?",
+        (role, user_id),
+    )
+
+    connection.commit()
+    connection.close()
+
+
+def count_admins():
+    connection = get_db_connection()
+
+    row = connection.execute(
+        "SELECT COUNT(*) AS n FROM users WHERE role = 'admin'"
+    ).fetchone()
+
+    connection.close()
+
+    return row["n"]

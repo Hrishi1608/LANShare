@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LANShare &mdash; Admin: Users</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="shell">
+
+        <div class="topbar">
+            <div class="wordmark">
+                <h1>LANShare</h1>
+                <p class="tagline">Admin &mdash; Users</p>
+            </div>
+            <div class="session">
+                Signed in as <strong>{{ session.username }}</strong>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="flash">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <nav class="nav-row">
+            <a class="nav-link" href="{{ url_for('main.home') }}">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('main.audit') }}">Audit log</a>
+            <a class="nav-link primary" href="{{ url_for('main.admin_users') }}">Manage users</a>
+        </nav>
+
+        <div class="section-head">
+            <h2>Users</h2>
+        </div>
+
+        <div class="files-wrap">
+
+            {% if users %}
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for user in users %}
+
+                            <tr>
+
+                                <td class="filename">
+                                    {{ user["username"] }}
+                                    {% if user["id"] == current_user_id %}
+                                        <span class="hash-text hash-text--missing">(you)</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <span class="action-tag action-tag--{{ 'delete' if user['role'] == 'admin' else 'benign' }}">
+                                        {{ user["role"] }}
+                                    </span>
+                                </td>
+
+                                <td class="uploaded-at">{{ user["created_at"] }}</td>
+
+                                <td class="actions">
+
+                                    {% if user["role"] == "admin" %}
+
+                                        <form
+                                            class="inline-form"
+                                            method="POST"
+                                            action="{{ url_for('main.admin_users_update', user_id=user['id']) }}"
+                                        >
+                                            <input type="hidden" name="role" value="user">
+                                            <button type="submit" class="btn btn-danger">
+                                                Demote to user
+                                            </button>
+                                        </form>
+
+                                    {% else %}
+
+                                        <form
+                                            class="inline-form"
+                                            method="POST"
+                                            action="{{ url_for('main.admin_users_update', user_id=user['id']) }}"
+                                        >
+                                            <input type="hidden" name="role" value="admin">
+                                            <button type="submit" class="btn">
+                                                Promote to admin
+                                            </button>
+                                        </form>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            {% else %}
+
+                <p class="empty-state">No users found.</p>
+
+            {% endif %}
+
+        </div>
+
+        <div class="footer-nav">
+            <a href="{{ url_for('main.home') }}">Back to dashboard</a>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

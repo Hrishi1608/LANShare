@@ -6,180 +6,183 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>LANShare</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
 
-    <h1>LANShare</h1>
-
-    <h2>Local Area Network File Sharing</h2>
-
-    {% with messages = get_flashed_messages() %}
-
-        {% if messages %}
-
-            {% for message in messages %}
-
-                <p>{{ message }}</p>
-
-            {% endfor %}
-
-        {% endif %}
-
-    {% endwith %}
-
     {% if logged_in %}
 
-        <h3>Welcome, {{ username }}!</h3>
+        <div class="shell">
 
-        <p>
-            Share files with devices on your local network.
-        </p>
+            <div class="topbar">
+                <div class="wordmark">
+                    <h1>LANShare</h1>
+                    <p class="tagline">Local network file sharing</p>
+                </div>
+                <div class="session">
+                    Signed in as <strong>{{ username }}</strong>
+                </div>
+            </div>
 
-        <!-- LANShare server information -->
-        <h3>LANShare Server</h3>
-
-        <p>
-            Device: {{ hostname }}
-        </p>
-
-        <p>
-            Local IP: {{ local_ip }}
-        </p>
-
-        <p>
-            Status: Online
-        </p>
-
-        <p>
-            Other devices on the same network can access LANShare at:
-        </p>
-
-        <p>
-            <strong>http://{{ local_ip }}:5000</strong>
-        </p>
-
-        <p>
-            <a href="{{ url_for('main.network') }}">
-                Network Information
-            </a>
-        </p>
-
-        <p>
-            <a href="{{ url_for('files.upload') }}">
-                Upload File
-            </a>
-        </p>
-
-        <h3>Shared Files</h3>
-
-        {% if files %}
-
-            <table border="1" cellpadding="8">
-
-                <thead>
-
-                    <tr>
-                        <th>File</th>
-                        <th>Size</th>
-                        <th>Uploaded By</th>
-                        <th>Uploaded At</th>
-                        <th>Actions</th>
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    {% for file in files %}
-
-                        <tr>
-
-                            <td>
-                                {{ file["filename"] }}
-                            </td>
-
-                            <td>
-                                {{ file["size"] }} bytes
-                            </td>
-
-                            <td>
-                                {{ file["uploader"] or "Unknown" }}
-                            </td>
-
-                            <td>
-                                {{ file["uploaded_at"] }}
-                            </td>
-
-                            <td>
-
-                                <a
-                                    href="{{ url_for('files.download', file_id=file['id']) }}"
-                                >
-                                    Download
-                                </a>
-
-                                {% if file["uploader"] == username %}
-
-                                    <form
-                                        method="POST"
-                                        action="{{ url_for('files.delete', file_id=file['id']) }}"
-                                        style="display: inline;"
-                                    >
-
-                                        <button type="submit">
-                                            Delete
-                                        </button>
-
-                                    </form>
-
-                                {% endif %}
-
-                            </td>
-
-                        </tr>
-
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="flash">{{ message }}</p>
                     {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-                </tbody>
+            <nav class="nav-row">
+                <a class="nav-link primary" href="{{ url_for('files.upload') }}">Upload file</a>
+                <a class="nav-link" href="{{ url_for('main.network') }}">Network info</a>
+                <a class="nav-link" href="{{ url_for('main.history') }}">Transfer history</a>
+            </nav>
 
-            </table>
+            <div class="section-head">
+                <h2>Server</h2>
+            </div>
 
-        {% else %}
+            <div class="server-card">
 
-            <p>
-                No files have been shared yet.
-            </p>
+                <div class="status-line">
+                    <span class="dot"></span>
+                    <span>Online</span>
+                </div>
 
-        {% endif %}
+                <dl class="server-grid">
 
-        <p>
-            <a href="{{ url_for('main.history') }}">
-                Transfer History
-            </a>
-        </p>
+                    <div class="server-field">
+                        <dt>Device</dt>
+                        <dd>{{ hostname }}</dd>
+                    </div>
 
-        <p>
-            <a href="{{ url_for('auth.logout') }}">
-                Logout
-            </a>
-        </p>
+                    <div class="server-field">
+                        <dt>Local IP</dt>
+                        <dd>{{ local_ip }}</dd>
+                    </div>
+
+                    <div class="server-field full">
+                        <dt>Other devices on this network can reach LANShare at</dt>
+                        <dd>http://{{ local_ip }}:5000</dd>
+                    </div>
+
+                </dl>
+
+            </div>
+
+            <div class="section-head">
+                <h2>Shared files</h2>
+            </div>
+
+            <div class="files-wrap">
+
+                {% if files %}
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>File</th>
+                                <th>Size</th>
+                                <th>Uploaded by</th>
+                                <th>Uploaded at</th>
+                                <th>Actions</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for file in files %}
+
+                                <tr>
+
+                                    <td class="filename">{{ file["filename"] }}</td>
+
+                                    <td class="size">{{ file["size"] }} bytes</td>
+
+                                    <td>{{ file["uploader"] or "Unknown" }}</td>
+
+                                    <td class="uploaded-at">{{ file["uploaded_at"] }}</td>
+
+                                    <td class="actions">
+
+                                        <a
+                                            class="btn"
+                                            href="{{ url_for('files.download', file_id=file['id']) }}"
+                                        >
+                                            Download
+                                        </a>
+
+                                        {% if file["uploader"] == username %}
+
+                                            <form
+                                                class="inline-form"
+                                                method="POST"
+                                                action="{{ url_for('files.delete', file_id=file['id']) }}"
+                                            >
+
+                                                <button type="submit" class="btn btn-danger">
+                                                    Delete
+                                                </button>
+
+                                            </form>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                {% else %}
+
+                    <p class="empty-state">
+                        No files have been shared yet. Upload one to get started.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+            <div class="footer-nav">
+                <a href="{{ url_for('main.history') }}">View transfer history</a>
+                <a href="{{ url_for('auth.logout') }}">Logout</a>
+            </div>
+
+        </div>
 
     {% else %}
 
-        <p>
-            Share files securely with devices on your local network.
-        </p>
+        <div class="shell">
 
-        <a href="{{ url_for('auth.login') }}">
-            Login
-        </a>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="flash">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-        <br><br>
+            <div class="hero">
+                <h1>LANShare</h1>
+                <p>Share files securely with devices on your local network.</p>
 
-        <a href="{{ url_for('auth.register') }}">
-            Create Account
-        </a>
+                <div class="hero-actions">
+                    <a class="nav-link primary" href="{{ url_for('auth.login') }}">Login</a>
+                    <a class="nav-link" href="{{ url_for('auth.register') }}">Create account</a>
+                </div>
+            </div>
+
+        </div>
 
     {% endif %}
 

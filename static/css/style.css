@@ -675,3 +675,40 @@ td.actions {
         align-self: center;
     }
 }
+
+/* ---- SHA-256 hash column ---- */
+.hash-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hash-text {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 6px;
+    cursor: help;
+}
+
+.hash-text--missing {
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: default;
+}
+
+.btn-copy {
+    font-size: 11px;
+    padding: 4px 8px;
+}
+
+@media (max-width: 768px) {
+    .hash-cell {
+        flex-wrap: wrap;
+    }
+}

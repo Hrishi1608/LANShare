@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 from uuid import uuid4
 
@@ -44,6 +45,17 @@ def allowed_file(filename):
         "." in filename
         and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
     )
+
+
+def compute_sha256(file_path, chunk_size=65536):
+    """Return the SHA-256 hex digest of a file on disk, read in chunks."""
+    digest = hashlib.sha256()
+
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            digest.update(chunk)
+
+    return digest.hexdigest()
 
 
 @files.route("/upload", methods=("GET", "POST"))
@@ -100,19 +112,21 @@ def upload():
         uploaded_file.save(file_path)
 
         file_size = file_path.stat().st_size
+        file_hash = compute_sha256(file_path)
 
         db = get_db_connection()
 
         cursor = db.execute(
             """
-            INSERT INTO files (filename, filepath, size, uploaded_by)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO files (filename, filepath, size, uploaded_by, sha256)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (
                 safe_name,
                 str(file_path),
                 file_size,
                 session["user_id"],
+                file_hash,
             ),
         )
 

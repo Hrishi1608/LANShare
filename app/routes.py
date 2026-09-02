@@ -1,8 +1,9 @@
-from flask import Blueprint, current_app, render_template, session
+from flask import Blueprint, current_app, render_template, send_file, session
 
 from app.auth import login_required
 from app.database import get_db_connection
 from app.network import get_hostname, get_local_ip
+from app.qrcode_util import generate_qr_png
 from app.stats import get_dashboard_stats
 
 
@@ -93,3 +94,14 @@ def network():
         local_ip=get_local_ip(),
         hostname=get_hostname(),
     )
+
+
+@main.route("/qr-code.png")
+@login_required
+def qr_code():
+    local_ip = get_local_ip()
+    lan_url = f"http://{local_ip}:5000"
+
+    buffer = generate_qr_png(lan_url)
+
+    return send_file(buffer, mimetype="image/png")

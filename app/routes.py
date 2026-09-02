@@ -1,7 +1,24 @@
-from flask import Blueprint, current_app, render_template, send_file, session
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
 
-from app.auth import login_required
-from app.database import get_db_connection
+from app.auth import admin_required, login_required
+from app.database import (
+    count_admins,
+    get_all_users,
+    get_db_connection,
+    get_user_by_id,
+    log_action,
+    set_user_role,
+)
 from app.network import get_hostname, get_local_ip
 from app.qrcode_util import generate_qr_png
 from app.stats import get_dashboard_stats
@@ -44,6 +61,7 @@ def home():
         "index.html",
         logged_in="user_id" in session,
         username=session.get("username"),
+        role=session.get("role"),
         files=files,
         local_ip=local_ip,
         hostname=hostname,
@@ -109,10 +127,8 @@ def qr_code():
 
 
 @main.route("/audit")
-@login_required
+@admin_required
 def audit():
-    # NOTE: currently visible to any logged-in user. This will be restricted
-    # to admins only once RBAC (feature/rbac-admin) lands.
     db = get_db_connection()
 
     logs = db.execute(
@@ -127,3 +143,55 @@ def audit():
     db.close()
 
     return render_template("audit.html", logs=logs)
+
+
+@main.route("/admin/users")
+@admin_required
+def admin_users():
+    users = get_all_users()
+
+    return render_template(
+        "admin_users.html",
+        users=users,
+        current_user_id=session.get("user_id"),
+    )
+
+
+@main.route("/admin/users/<int:user_id>/role", methods=("POST",))
+@admin_required
+def admin_users_update(user_id):
+    new_role = request.form.get("role", "").strip()
+
+    if new_role not in ("admin", "user"):
+        flash("Invalid role.")
+        return redirect(url_for("main.admin_users"))
+
+    target_user = get_user_by_id(user_id)
+
+    if target_user is None:
+        flash("User not found.")
+        return redirect(url_for("main.admin_users"))
+
+    # Prevent locking everyone out of the admin panel: don't allow demoting
+    # the last remaining admin, whether that's yourself or someone else.
+    if target_user["role"] == "admin" and new_role == "user" and count_admins() <= 1:
+        flash("Can't demote the last remaining admin.")
+        return redirect(url_for("main.admin_users"))
+
+    set_user_role(user_id, new_role)
+
+    log_action(
+        user_id=session.get("user_id"),
+        username=session.get("username"),
+        action="role_change",
+        target=f"{target_user['username']} -> {new_role}",
+        ip_address=request.remote_addr,
+    )
+
+    # If an admin changes their own role, refresh the session immediately
+    # so the change takes effect without requiring a re-login.
+    if user_id == session.get("user_id"):
+        session["role"] = new_role
+
+    flash(f"Updated {target_user['username']}'s role to {new_role}.")
+    return redirect(url_for("main.admin_users"))

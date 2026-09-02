@@ -2,6 +2,7 @@ from functools import wraps
 
 from flask import (
     Blueprint,
+    abort,
     flash,
     redirect,
     render_template,
@@ -11,7 +12,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app.database import get_db_connection, log_action
+from app.database import count_users, get_db_connection, log_action
 
 
 auth = Blueprint("auth", __name__)
@@ -48,12 +49,17 @@ def register():
             method="pbkdf2:sha256",
         )
 
+        # The very first account on a fresh install becomes admin automatically,
+        # so there's always someone who can reach the admin panel. Everyone
+        # after that starts as a regular user and has to be promoted.
+        role = "admin" if count_users() == 0 else "user"
+
         cursor = db.execute(
             """
-            INSERT INTO users (username, password_hash)
-            VALUES (?, ?)
+            INSERT INTO users (username, password_hash, role)
+            VALUES (?, ?, ?)
             """,
-            (username, password_hash),
+            (username, password_hash, role),
         )
 
         db.commit()
@@ -85,7 +91,7 @@ def login():
 
         user = db.execute(
             """
-            SELECT id, username, password_hash
+            SELECT id, username, password_hash, role
             FROM users
             WHERE username = ?
             """,
@@ -110,6 +116,7 @@ def login():
         session.clear()
         session["user_id"] = user["id"]
         session["username"] = user["username"]
+        session["role"] = user["role"]
 
         log_action(
             user_id=user["id"],
@@ -147,6 +154,30 @@ def login_required(view):
         if "user_id" not in session:
             flash("Please log in to access that page.")
             return redirect(url_for("auth.login"))
+
+        return view(**kwargs)
+
+    return wrapped_view
+
+
+def admin_required(view):
+    """Like login_required, but also requires session['role'] == 'admin'.
+
+    Role is trusted from the session (set at login), not re-checked against
+    the DB on every request, matching how login_required already trusts
+    session['user_id']. If you need to guard against a role change taking
+    effect mid-session, that's a follow-up (e.g. short session lifetime or
+    re-checking on sensitive actions).
+    """
+
+    @wraps(view)
+    def wrapped_view(**kwargs):
+        if "user_id" not in session:
+            flash("Please log in to access that page.")
+            return redirect(url_for("auth.login"))
+
+        if session.get("role") != "admin":
+            abort(403)
 
         return view(**kwargs)
 

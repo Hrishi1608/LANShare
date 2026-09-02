@@ -11,7 +11,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app.database import get_db_connection
+from app.database import get_db_connection, log_action
 
 
 auth = Blueprint("auth", __name__)
@@ -48,7 +48,7 @@ def register():
             method="pbkdf2:sha256",
         )
 
-        db.execute(
+        cursor = db.execute(
             """
             INSERT INTO users (username, password_hash)
             VALUES (?, ?)
@@ -57,7 +57,17 @@ def register():
         )
 
         db.commit()
+
+        new_user_id = cursor.lastrowid
+
         db.close()
+
+        log_action(
+            user_id=new_user_id,
+            username=username,
+            action="register",
+            ip_address=request.remote_addr,
+        )
 
         flash("Registration successful. Please log in.")
         return redirect(url_for("auth.login"))
@@ -88,12 +98,25 @@ def login():
             user["password_hash"],
             password,
         ):
+            log_action(
+                user_id=None,
+                username=username,
+                action="login_failed",
+                ip_address=request.remote_addr,
+            )
             flash("Invalid username or password.")
             return render_template("login.html")
 
         session.clear()
         session["user_id"] = user["id"]
         session["username"] = user["username"]
+
+        log_action(
+            user_id=user["id"],
+            username=user["username"],
+            action="login",
+            ip_address=request.remote_addr,
+        )
 
         return redirect(url_for("main.home"))
 
@@ -102,7 +125,18 @@ def login():
 
 @auth.route("/logout")
 def logout():
+    user_id = session.get("user_id")
+    username = session.get("username")
+
     session.clear()
+
+    log_action(
+        user_id=user_id,
+        username=username,
+        action="logout",
+        ip_address=request.remote_addr,
+    )
+
     flash("You have been logged out.")
     return redirect(url_for("main.home"))
 

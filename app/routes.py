@@ -106,3 +106,24 @@ def qr_code():
     buffer = generate_qr_png(lan_url)
 
     return send_file(buffer, mimetype="image/png")
+
+
+@main.route("/audit")
+@login_required
+def audit():
+    # NOTE: currently visible to any logged-in user. This will be restricted
+    # to admins only once RBAC (feature/rbac-admin) lands.
+    db = get_db_connection()
+
+    logs = db.execute(
+        """
+        SELECT id, username, action, target, ip_address, created_at
+        FROM audit_log
+        ORDER BY id DESC
+        LIMIT 200
+        """
+    ).fetchall()
+
+    db.close()
+
+    return render_template("audit.html", logs=logs)

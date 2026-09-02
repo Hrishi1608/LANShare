@@ -63,6 +63,17 @@ def init_db():
             completed_at TIMESTAMP,
             FOREIGN KEY (file_id) REFERENCES files(id)
         );
+
+        CREATE TABLE IF NOT EXISTS audit_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            username TEXT,
+            action TEXT NOT NULL,
+            target TEXT,
+            ip_address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
         """
     )
 
@@ -99,6 +110,22 @@ def log_transfer(
             status,
             size,
         ),
+    )
+
+    connection.commit()
+    connection.close()
+
+
+def log_action(user_id, username, action, target=None, ip_address=None):
+    """Record a security/audit event (login, logout, upload, download, delete, etc.)."""
+    connection = get_db_connection()
+
+    connection.execute(
+        """
+        INSERT INTO audit_log (user_id, username, action, target, ip_address)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (user_id, username, action, target, ip_address),
     )
 
     connection.commit()

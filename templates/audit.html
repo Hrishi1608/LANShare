@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LANShare &mdash; Audit Log</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="shell">
+
+        <div class="topbar">
+            <div class="wordmark">
+                <h1>LANShare</h1>
+                <p class="tagline">Audit log</p>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="flash">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <nav class="nav-row">
+            <a class="nav-link" href="{{ url_for('main.home') }}">Back to dashboard</a>
+        </nav>
+
+        <div class="section-head">
+            <h2>Recent activity</h2>
+        </div>
+
+        <div class="files-wrap">
+
+            {% if logs %}
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Target</th>
+                            <th>IP address</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for log in logs %}
+
+                            <tr>
+
+                                <td class="uploaded-at">{{ log["created_at"] }}</td>
+
+                                <td>{{ log["username"] or "Unknown" }}</td>
+
+                                <td>
+                                    <span class="action-tag action-tag--{{ log['action'] }}">
+                                        {{ log["action"] }}
+                                    </span>
+                                </td>
+
+                                <td class="filename">{{ log["target"] or "&mdash;" }}</td>
+
+                                <td class="size">{{ log["ip_address"] or "&mdash;" }}</td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            {% else %}
+
+                <p class="empty-state">
+                    No activity has been recorded yet.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

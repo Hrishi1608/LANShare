@@ -16,7 +16,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from app.auth import login_required
-from app.database import get_db_connection, log_transfer
+from app.database import get_db_connection, log_action, log_transfer
 
 
 files = Blueprint("files", __name__)
@@ -143,6 +143,14 @@ def upload():
             size=file_size,
         )
 
+        log_action(
+            user_id=session["user_id"],
+            username=session.get("username"),
+            action="upload",
+            target=safe_name,
+            ip_address=request.remote_addr,
+        )
+
         flash(f"{safe_name} uploaded successfully.")
         return redirect(url_for("main.home"))
 
@@ -192,6 +200,14 @@ def download(file_id):
         size=file_path.stat().st_size,
     )
 
+    log_action(
+        user_id=session.get("user_id"),
+        username=session.get("username"),
+        action="download",
+        target=file_record["filename"],
+        ip_address=request.remote_addr,
+    )
+
     return send_file(
         file_path,
         as_attachment=True,
@@ -235,6 +251,14 @@ def delete(file_id):
 
     db.commit()
     db.close()
+
+    log_action(
+        user_id=session["user_id"],
+        username=session.get("username"),
+        action="delete",
+        target=file_record["filename"],
+        ip_address=request.remote_addr,
+    )
 
     flash(f"{file_record['filename']} deleted successfully.")
     return redirect(url_for("main.home"))

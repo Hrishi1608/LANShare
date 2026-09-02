@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, session
+from flask import Blueprint, current_app, render_template, session
 
 from app.auth import login_required
 from app.database import get_db_connection
 from app.network import get_hostname, get_local_ip
+from app.stats import get_dashboard_stats
 
 
 main = Blueprint("main", __name__)
@@ -13,6 +14,7 @@ def home():
     files = []
     local_ip = get_local_ip()
     hostname = get_hostname()
+    stats = None
 
     if "user_id" in session:
         db = get_db_connection()
@@ -34,6 +36,8 @@ def home():
 
         db.close()
 
+        stats = get_dashboard_stats(current_app.config["UPLOAD_FOLDER"])
+
     return render_template(
         "index.html",
         logged_in="user_id" in session,
@@ -41,6 +45,7 @@ def home():
         files=files,
         local_ip=local_ip,
         hostname=hostname,
+        stats=stats,
     )
 
 

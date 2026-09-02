@@ -72,6 +72,28 @@
 
             </div>
 
+            <!-- INSERT this block right after the .server-card closing </div>,
+                 before or after the stats-grid block from the previous PR -->
+
+            <div class="qr-card">
+
+                <div class="qr-card-text">
+                    <span class="stat-label">Scan to connect</span>
+                    <p class="qr-hint">
+                        Scan this code with a phone on the same network to open LANShare instantly.
+                    </p>
+                </div>
+
+                <img
+                    class="qr-image"
+                    src="{{ url_for('main.qr_code') }}"
+                    alt="QR code linking to LANShare on this network"
+                    width="140"
+                    height="140"
+                >
+
+            </div>
+
             <!-- INSERT this whole block right after the closing </div> of .server-card,
                  and before the "Shared files" <div class="section-head"> -->
 

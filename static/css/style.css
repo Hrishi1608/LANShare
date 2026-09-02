@@ -627,3 +627,51 @@ td.actions {
         grid-column: span 1;
     }
 }
+
+/* ---- QR connect card ---- */
+.qr-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-top: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.qr-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 380px;
+}
+
+.qr-hint {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.qr-image {
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    background: #fff;
+}
+
+@media (max-width: 560px) {
+    .qr-card {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .qr-image {
+        align-self: center;
+    }
+}

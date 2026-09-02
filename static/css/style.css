@@ -548,3 +548,82 @@ td.actions {
         padding: 11px 16px;
     }
 }
+
+/* ---- Network dashboard stats ---- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.stat-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.stat-value {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.stat-card--disk {
+    grid-column: span 2;
+    justify-content: center;
+}
+
+.disk-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.disk-bar-fill {
+    height: 100%;
+    background: var(--signal);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .stat-card--disk {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-card--disk {
+        grid-column: span 1;
+    }
+}

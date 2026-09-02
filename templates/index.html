@@ -72,6 +72,42 @@
 
             </div>
 
+            <!-- INSERT this whole block right after the closing </div> of .server-card,
+                 and before the "Shared files" <div class="section-head"> -->
+
+            {% if stats %}
+
+                <div class="stats-grid">
+
+                    <div class="stat-card">
+                        <span class="stat-label">Files stored</span>
+                        <span class="stat-value">{{ stats.file_count }}</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-label">Storage used</span>
+                        <span class="stat-value">{{ stats.total_size_display }}</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-label">Server uptime</span>
+                        <span class="stat-value">{{ stats.uptime_display }}</span>
+                    </div>
+
+                    <div class="stat-card stat-card--disk">
+                        <span class="stat-label">
+                            Disk usage &mdash; {{ stats.disk_used_display }} / {{ stats.disk_total_display }}
+                        </span>
+                        <div class="disk-bar">
+                            <div class="disk-bar-fill" style="width: {{ stats.disk_percent_used }}%;"></div>
+                        </div>
+                        <span class="stat-sub">{{ stats.disk_percent_used }}% used &middot; {{ stats.disk_free_display }} free</span>
+                    </div>
+
+                </div>
+
+            {% endif %}
+
             <div class="section-head">
                 <h2>Shared files</h2>
             </div>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LANShare &mdash; Share link created</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="shell">
+
+        <div class="topbar">
+            <div class="wordmark">
+                <h1>LANShare</h1>
+                <p class="tagline">Share link created</p>
+            </div>
+            <div class="session">
+                Signed in as <strong>{{ session.username }}</strong>
+            </div>
+        </div>
+
+        <div class="section-head">
+            <h2>&ldquo;{{ share["filename"] }}&rdquo; is ready to share</h2>
+        </div>
+
+        <div class="qr-card">
+
+            <div class="qr-card-text">
+                <span class="stat-label">Link</span>
+                <p class="qr-hint" id="share-link-text">{{ share_url }}</p>
+            </div>
+
+            <button
+                type="button"
+                class="btn btn-copy"
+                data-hash="{{ share_url }}"
+                onclick="lanshareCopyHash(this)"
+            >
+                Copy link
+            </button>
+
+        </div>
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <span class="stat-label">Expires</span>
+                <span class="stat-value" style="font-size: 1rem;">
+                    {{ share["expires_at"] or "Never" }}
+                </span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Password protected</span>
+                <span class="stat-value" style="font-size: 1rem;">
+                    {{ "Yes" if share["password_hash"] else "No" }}
+                </span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Download limit</span>
+                <span class="stat-value" style="font-size: 1rem;">
+                    {{ share["max_downloads"] or "Unlimited" }}
+                </span>
+            </div>
+
+        </div>
+
+        <p class="empty-state">
+            Anyone with this link can download the file (subject to the password and limits above),
+            without needing a LANShare account. Manage or revoke it anytime from
+            <a href="{{ url_for('shares.list_shares') }}">My share links</a>.
+        </p>
+
+        <div class="footer-nav">
+            <a href="{{ url_for('main.home') }}">Back to dashboard</a>
+            <a href="{{ url_for('shares.list_shares') }}">My share links</a>
+        </div>
+
+    </div>
+
+    <script>
+        function lanshareCopyHash(button) {
+            const value = button.getAttribute("data-hash");
+
+            navigator.clipboard.writeText(value).then(() => {
+                const original = button.textContent;
+                button.textContent = "Copied";
+                setTimeout(() => {
+                    button.textContent = original;
+                }, 1500);
+            });
+        }
+    </script>
+
+</body>
+
+</html>

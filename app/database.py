@@ -100,6 +100,21 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
+
+        CREATE TABLE IF NOT EXISTS shares (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            password_hash TEXT,
+            expires_at TIMESTAMP,
+            max_downloads INTEGER,
+            download_count INTEGER NOT NULL DEFAULT 0,
+            revoked INTEGER NOT NULL DEFAULT 0,
+            created_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (file_id) REFERENCES files(id),
+            FOREIGN KEY (created_by) REFERENCES users(id)
+        );
         """
     )
 
@@ -230,3 +245,148 @@ def count_admins():
     connection.close()
 
     return row["n"]
+
+
+def get_file_by_id(file_id):
+    connection = get_db_connection()
+
+    file_row = connection.execute(
+        """
+        SELECT files.id, files.filename, files.filepath, files.size, files.uploaded_by,
+               users.username AS uploader
+        FROM files
+        LEFT JOIN users ON files.uploaded_by = users.id
+        WHERE files.id = ?
+        """,
+        (file_id,),
+    ).fetchone()
+
+    connection.close()
+
+    return file_row
+
+
+def create_share(file_id, token, password_hash, expires_at, max_downloads, created_by):
+    connection = get_db_connection()
+
+    connection.execute(
+        """
+        INSERT INTO shares (file_id, token, password_hash, expires_at, max_downloads, created_by)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (file_id, token, password_hash, expires_at, max_downloads, created_by),
+    )
+
+    connection.commit()
+    connection.close()
+
+
+def get_share_by_token(token):
+    connection = get_db_connection()
+
+    share = connection.execute(
+        """
+        SELECT
+            shares.id,
+            shares.file_id,
+            shares.token,
+            shares.password_hash,
+            shares.expires_at,
+            shares.max_downloads,
+            shares.download_count,
+            shares.revoked,
+            shares.created_by,
+            shares.created_at,
+            files.filename,
+            files.filepath,
+            files.size
+        FROM shares
+        LEFT JOIN files ON shares.file_id = files.id
+        WHERE shares.token = ?
+        """,
+        (token,),
+    ).fetchone()
+
+    connection.close()
+
+    return share
+
+
+def increment_share_downloads(token):
+    connection = get_db_connection()
+
+    connection.execute(
+        "UPDATE shares SET download_count = download_count + 1 WHERE token = ?",
+        (token,),
+    )
+
+    connection.commit()
+    connection.close()
+
+
+def revoke_share(share_id):
+    connection = get_db_connection()
+
+    connection.execute(
+        "UPDATE shares SET revoked = 1 WHERE id = ?",
+        (share_id,),
+    )
+
+    connection.commit()
+    connection.close()
+
+
+def get_shares_for_user(user_id, include_all=False):
+    """Return active-and-past shares. Regular users see only shares they
+    created; admins (include_all=True) see everyone's."""
+    connection = get_db_connection()
+
+    if include_all:
+        shares = connection.execute(
+            """
+            SELECT
+                shares.id, shares.token, shares.expires_at, shares.max_downloads,
+                shares.download_count, shares.revoked, shares.created_at,
+                shares.password_hash,
+                files.filename,
+                users.username AS created_by_username
+            FROM shares
+            LEFT JOIN files ON shares.file_id = files.id
+            LEFT JOIN users ON shares.created_by = users.id
+            ORDER BY shares.id DESC
+            """
+        ).fetchall()
+    else:
+        shares = connection.execute(
+            """
+            SELECT
+                shares.id, shares.token, shares.expires_at, shares.max_downloads,
+                shares.download_count, shares.revoked, shares.created_at,
+                shares.password_hash,
+                files.filename,
+                users.username AS created_by_username
+            FROM shares
+            LEFT JOIN files ON shares.file_id = files.id
+            LEFT JOIN users ON shares.created_by = users.id
+            WHERE shares.created_by = ?
+            ORDER BY shares.id DESC
+            """,
+            (user_id,),
+        ).fetchall()
+
+    connection.close()
+
+    return shares
+
+
+def get_share_by_id(share_id):
+    connection = get_db_connection()
+
+    share = connection.execute(
+        "SELECT id, created_by FROM shares WHERE id = ?",
+        (share_id,),
+    ).fetchone()
+
+    connection.close()
+
+    return share

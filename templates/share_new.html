@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LANShare &mdash; New share link</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="shell">
+
+        <div class="topbar">
+            <div class="wordmark">
+                <h1>LANShare</h1>
+                <p class="tagline">Create a share link</p>
+            </div>
+            <div class="session">
+                Signed in as <strong>{{ session.username }}</strong>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="flash">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="section-head">
+            <h2>Share &ldquo;{{ file["filename"] }}&rdquo;</h2>
+        </div>
+
+        <div class="server-card">
+
+            <form method="POST" action="{{ url_for('shares.new', file_id=file['id']) }}">
+
+                <div class="server-field full" style="margin-bottom: 1rem;">
+                    <dt>Link expires after</dt>
+                    <dd>
+                        <select name="expiry">
+                            <option value="1">1 hour</option>
+                            <option value="24" selected>24 hours</option>
+                            <option value="168">7 days</option>
+                            <option value="0">Never</option>
+                        </select>
+                    </dd>
+                </div>
+
+                <div class="server-field full" style="margin-bottom: 1rem;">
+                    <dt>Password (optional)</dt>
+                    <dd>
+                        <input type="text" name="password" placeholder="Leave blank for no password">
+                    </dd>
+                </div>
+
+                <div class="server-field full" style="margin-bottom: 1rem;">
+                    <dt>Max downloads (optional)</dt>
+                    <dd>
+                        <input type="number" name="max_downloads" min="1" placeholder="Leave blank for unlimited">
+                    </dd>
+                </div>
+
+                <button type="submit" class="btn btn-copy">Create share link</button>
+
+            </form>
+
+        </div>
+
+        <div class="footer-nav">
+            <a href="{{ url_for('main.home') }}">Back to dashboard</a>
+            <a href="{{ url_for('shares.list_shares') }}">My share links</a>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

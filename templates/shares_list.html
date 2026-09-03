@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LANShare &mdash; My share links</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="shell">
+
+        <div class="topbar">
+            <div class="wordmark">
+                <h1>LANShare</h1>
+                <p class="tagline">{{ "All share links" if is_admin else "My share links" }}</p>
+            </div>
+            <div class="session">
+                Signed in as <strong>{{ session.username }}</strong>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="flash">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="section-head">
+            <h2>Share links</h2>
+        </div>
+
+        <div class="files-wrap">
+
+            {% if shares %}
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            {% if is_admin %}<th>Created by</th>{% endif %}
+                            <th>Expires</th>
+                            <th>Downloads</th>
+                            <th>Password</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for share in shares %}
+
+                            <tr>
+
+                                <td class="filename">{{ share["filename"] }}</td>
+
+                                {% if is_admin %}
+                                    <td>{{ share["created_by_username"] or "Unknown" }}</td>
+                                {% endif %}
+
+                                <td class="uploaded-at">{{ share["expires_at"] or "Never" }}</td>
+
+                                <td>
+                                    {{ share["download_count"] }}{% if share["max_downloads"] %} / {{ share["max_downloads"] }}{% endif %}
+                                </td>
+
+                                <td>{{ "Yes" if share["password_hash"] else "No" }}</td>
+
+                                <td>
+                                    {% if share["revoked"] %}
+                                        <span class="action-tag action-tag--delete">revoked</span>
+                                    {% else %}
+                                        <span class="action-tag action-tag--benign">active</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="actions">
+
+                                    {% if not share["revoked"] %}
+
+                                        <a
+                                            class="btn"
+                                            href="{{ request_host }}{{ url_for('shares.access', token=share['token']) }}"
+                                            target="_blank"
+                                        >
+                                            Open link
+                                        </a>
+
+                                        <form
+                                            class="inline-form"
+                                            method="POST"
+                                            action="{{ url_for('shares.revoke', share_id=share['id']) }}"
+                                        >
+                                            <button type="submit" class="btn btn-danger">Revoke</button>
+                                        </form>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            {% else %}
+
+                <p class="empty-state">No share links yet. Create one from a file's Share action.</p>
+
+            {% endif %}
+
+        </div>
+
+        <div class="footer-nav">
+            <a href="{{ url_for('main.home') }}">Back to dashboard</a>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

@@ -38,6 +38,7 @@
                 <a class="nav-link primary" href="{{ url_for('files.upload') }}">Upload file</a>
                 <a class="nav-link" href="{{ url_for('main.network') }}">Network info</a>
                 <a class="nav-link" href="{{ url_for('main.history') }}">Transfer history</a>
+                <a class="nav-link" href="{{ url_for('shares.list_shares') }}">My share links</a>
                 {% if role == "admin" %}
                     <a class="nav-link" href="{{ url_for('main.audit') }}">Audit log</a>
                     <a class="nav-link" href="{{ url_for('main.admin_users') }}">Manage users</a>
@@ -191,6 +192,15 @@
                                         >
                                             Download
                                         </a>
+
+                                        {% if file["uploader"] == username or role == "admin" %}
+                                            <a
+                                                class="btn btn-copy"
+                                                href="{{ url_for('shares.new', file_id=file['id']) }}"
+                                            >
+                                                Share
+                                            </a>
+                                        {% endif %}
 
                                         {% if file["uploader"] == username %}
 

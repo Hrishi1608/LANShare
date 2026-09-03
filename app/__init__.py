@@ -4,6 +4,7 @@ from pathlib import Path
 from flask import Flask
 
 from app.database import init_db
+ 
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,10 +33,12 @@ def create_app():
     from app.auth import auth
     from app.files import files
     from app.routes import main
+    from app.shares import shares as shares_blueprint
 
     app.register_blueprint(main)
     app.register_blueprint(auth, url_prefix="/auth")
     app.register_blueprint(files, url_prefix="/files")
+    app.register_blueprint(shares_blueprint)   
 
     with app.app_context():
         init_db()

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LANShare &mdash; Link unavailable</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="shell">
+
+        <div class="hero">
+            <h1>LANShare</h1>
+
+            {% if reason == "not_found" %}
+                <p>This share link doesn't exist. Double-check the URL.</p>
+            {% elif reason == "revoked" %}
+                <p>This share link has been revoked by its owner.</p>
+            {% elif reason == "expired" %}
+                <p>This share link has expired.</p>
+            {% elif reason == "limit_reached" %}
+                <p>This share link has reached its download limit.</p>
+            {% else %}
+                <p>This share link is no longer available.</p>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
